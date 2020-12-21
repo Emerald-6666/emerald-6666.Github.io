@@ -1,40 +1,278 @@
-##欢迎来到七年级群官网                                                                                                                                                             
-###联系管理员方式：微信:@黑色的白气球                 @早上好
-                       @斗地主网管40021401          @🌝🌚🌝🌚🌚🌝🌚🌝    
-                       @[金牌主管]mrsongbyssgs      @……
-                       @[某不知名带文学家](^～^)     @谢太傅的爸爸谢飞机
-                       @風が夢を追う^_^ ぱ爱昵       @7班付Jerry                                                                                                                   
-                      或管理员邮箱： 1351796844@qq.com                                                                                                                             
-                       y13029451436@163.com                                                                                                                                     
-                       46fdsb@gmail.com                                                                                                                                       
-                       13029451436@sina.cn                                                                                                                                       
-                       mrsongbyssgs@sbrs.org.cn
-                       Sbrs.org.cn 为本群指定域名，望周知                                                                                                                         
-                       如有管理层人员想要注册邮箱的，请联系我                                                                                                                       
-                    
+<?php
 
-###群规部分：
- ●进群请修改群ID为个人姓名，方便认人。                                                                                                                                             
- ●当有人问问题的时候请不要无视，请给予对方一点帮助，助人为乐。                                                                                                                         
- ●禁止恶意调戏管理/群主                                                                                                                                                           
- ●希望各位和平相处不要引战，乱黑，尊重对方的喜好，不随意嘲讽轻蔑。不盲目跟风。                                                                                                         
- ●谩骂对方，语言攻击，键盘侠直接劝退。                                                                                                                                              
- ●禁止公然开车，发送恐怖、精神污染、血腥等图片，营造良好群内风气                                                                                                                       
- ●勿谈政事，也不要乱玩这方面的梗                                                                                                                                                   
- ●注意ta人隐私，即使是公开信息在本人不同意的时候禁止传播                                                                                                                             
- ●群名片禁止模仿ta人微信名                                                                                                                                                         
- ●违反上述任何规定你都会被清出此群                                                                                                                                                 
- ●刷屏超过20时警告，三次警告无效后直接飞机票                                                                                                                                         
- ●妨碍管理员工作者，直接踢                                                                                                                                                         
- ●一般违规追溯期为三十天左右，严重违规无限期追究。                                                                                                                                   
- ●禁止造谣，被发现立即进行调查并取证(一旦坐实严惩)，之后以扰乱本群秩序和违反第五条进行审判，下面是惩罚方法                                                                                 
- 1.造谣一次进行警告并纳入追溯期
- 2.对管理员造谣并被发现但没有造成严重后果的，由高层进行投票表决                                                                                                                       
- 3.对管理员造谣并使管理员对被诬陷的人进行处理的，直接踢出本群                                                                                                                        
- 4.造谣多次并引发不良影响，而且还使管理员踢出被诬陷人的，最后踢出还进群，并不承担责任的，将拉入者警告并纳入追溯期，同时也对造谣者永久踢出并使本群进入时长两天的冻结限流期                       
- ●禁止使用某些敏感名称，如。xxx班班主任，xxx是我儿子等。                                                                                                                             
- ●凡是发现有老师或父母偷看手机，非正当(由老师或家长传播)传播此群等情况，请立即举报，举报有奖
- ●请勿发表涉及政治、成人、暴力、色 情、广告等相关内容。                                                                                                                               
- ●请勿发表引战内容，避免来源不明确、具有争议性的信息。                                                                                                                               
- ●复读机，喷子，杠精，xxs直接踢                                                                                                                                                     
- ●凡是冒充管理层人员或冒充管理员的，警告后直接踢，情节严重按造谣罪处理                                                                                                                 
+/*
+	[Discuz!] (C)2001-2009 Comsenz Inc.
+	This is NOT a freeware, use is subject to license terms
+
+	$Id: admincp.php 20568 2009-10-09 09:38:53Z monkey $
+*/
+
+define('IN_ADMINCP', TRUE);
+define('NOROBOT', TRUE);
+require_once './include/common.inc.php';
+require_once DISCUZ_ROOT.'./admin/global.func.php';
+require_once DISCUZ_ROOT.'./admin/cpanel.share.php';
+require_once DISCUZ_ROOT.'./include/cache.func.php';
+
+include language('admincp');
+
+$discuz_action = 211;
+
+//$admincp['checkip'] && $onlineip = empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
+
+$adminsession = new AdminSession($discuz_uid, $groupid, $adminid, $onlineip);
+$dactionarray = $adminsession->get('dactionarray');
+if($dactionarray ===  null) {
+	$dactionarray = array();
+	if($radminid != $groupid) {
+		$tmp = unserialize($db->result_first("SELECT disabledactions FROM {$tablepre}adminactions WHERE admingid='$groupid'"));
+		$dactionarray = $tmp ? $tmp : array();
+	}
+	$adminsession->set('dactionarray', $dactionarray, true);
+}
+
+$cpaccess = $adminsession->cpaccess;
+if($cpaccess == 0 || (!$discuz_secques && $admincp['forcesecques'])) {
+	require_once DISCUZ_ROOT.'./admin/login.inc.php';
+} elseif($cpaccess == 1) {
+	if($admin_password != '') {
+		require_once DISCUZ_ROOT.'./uc_client/client.php';
+		$ucresult = uc_user_login($discuz_uid, $admin_password, 1, 1, $admin_questionid, $admin_answer);
+		if($ucresult[0] > 0) {
+			$adminsession->errorcount = -1;
+			$adminsession->update();
+			dheader('Location: '.$BASESCRIPT.'?'.cpurl('url', array('sid')));
+		} else {
+			$adminsession->errorcount ++;
+			$adminsession->update();
+			writelog('cplog', dhtmlspecialchars("$timestamp\t$discuz_userss\t$adminid\t$onlineip\t$action\tAUTHENTIFICATION(PASSWORD)"));
+		}
+	}
+	require_once DISCUZ_ROOT.'./admin/login.inc.php';
+} else {
+
+	$username = !empty($username) ? dhtmlspecialchars($username) : '';
+	$action = !empty($action) && is_string($action) ? trim($action) : '';
+	$operation = !empty($operation) && is_string($operation) ? trim($operation) : '';
+	$page = isset($page) ? intval((max(1, $page))) : 0;
+
+	if(!empty($action) && !in_array($action, array('main', 'logs'))) {
+		switch($cpaccess) {
+			case 1:
+				$extralog = 'AUTHENTIFICATION(ERROR #'.intval($adminsession['errorcount']).')';
+				break;
+			case 3:
+				$extralog = implodearray(array('GET' => $_GET, 'POST' => $_POST), array('formhash', 'submit', 'addsubmit', 'admin_password', 'sid', 'action'));
+				break;
+			default:
+				$extralog = '';
+		}
+		$extralog = trim(str_replace(array('GET={};', 'POST={};'), '', $extralog));
+		$extralog = $action == 'home' && isset($securyservice) ? '' : $extralog;
+		writelog('cplog', implode("\t", clearlogstring(array($timestamp,$discuz_userss,$adminid,$onlineip,$action,$extralog))));
+		unset($extralog);
+	}
+
+	$isfounder = $adminsession->isfounder = isfounder();
+	if(empty($action) || isset($frames)) {
+		$extra = cpurl('url');
+		$extra = $extra && $action ? $extra : (!empty($runwizard) ? 'action=runwizard' : 'action=home');
+		require_once DISCUZ_ROOT.'./admin/main.inc.php';
+	} elseif($action == 'logout') {
+		$adminsession ->destroy();
+		dheader("Location: $indexname");
+	} else {
+		checkacpaction($action, $operation);
+		if(in_array($action, array('home', 'settings', 'members', 'profilefields', 'admingroups', 'usergroups', 'ranks', 'forums', 'threadtypes', 'threads', 'moderate', 'attach', 'smilies', 'recyclebin', 'prune', 'styles', 'addons', 'plugins', 'tasks', 'magics', 'medals', 'google', 'qihoo', 'announce', 'faq', 'ec', 'tradelog', 'creditwizard', 'jswizard', 'project', 'counter', 'misc', 'adv', 'logs', 'tools', 'checktools', 'search', 'upgrade')) || ($isfounder && in_array($action, array('runwizard', 'templates', 'db')))) {
+			require_once DISCUZ_ROOT.'./admin/'.$action.'.inc.php';
+			$title = 'cplog_'.$action.($operation ? '_'.$operation : '');
+		} else {
+			cpheader();
+			cpmsg('noaccess');
+		}
+		cpfooter();
+
+	}
+}
+
+?>
+<?php
+
+/*
+	[Discuz!] (C)2001-2009 Comsenz Inc.
+	This is NOT a freeware, use is subject to license terms
+
+	$Id: ajax.php 21155 2009-11-18 00:36:45Z monkey $
+*/
+
+define('CURSCRIPT', 'ajax');
+define('NOROBOT', TRUE);
+
+require_once './include/common.inc.php';
+if($action == 'updatesecqaa') {
+
+	$message = '';
+	if($secqaa) {
+		require_once DISCUZ_ROOT.'./forumdata/cache/cache_secqaa.php';
+		$secqaa = max(1, random(1, 1));
+		$message = $_DCACHE['secqaa'][$secqaa]['question'];
+		if($seclevel) {
+			$seccode = $secqaa * 1000000 + substr($seccode, -6);
+			updatesession();
+		} else {
+			dsetcookie('secq', authcode($secqaa."\t".$timestamp."\t".$discuz_uid, 'ENCODE'), 3600);
+		}
+	}
+	showmessage($message);
+
+} elseif($action == 'updateseccode') {
+
+	$message = '';
+	if($seccodestatus) {
+		$secqaa = substr($seccode, 0, 1);
+		$seccode = random(6, 1);
+		$rand = random(5, 1);
+		if($seclevel) {
+			$seccode += $secqaa * 1000000;
+			updatesession();
+		} else {
+			$key = $seccodedata['type'] != 3 ? '' : $_DCACHE['settings']['authkey'].date('Ymd');
+			dsetcookie('secc', authcode($seccode."\t".$timestamp."\t".$discuz_uid, 'ENCODE', $key), 3600);
+		}
+		if($seccodedata['type'] == 2) {
+			$message = '<div style="width:'.$seccodedata['width'].'px; height:'.$seccodedata['height'].'px;" id="seccodeswf_'.$secchecktype.'"></div>'.(extension_loaded('ming') ? "<script type=\"text/javascript\" reload=\"1\">\n$('seccodeswf_$secchecktype').innerHTML=AC_FL_RunContent(
+				'width', '$seccodedata[width]', 'height', '$seccodedata[height]', 'src', 'seccode.php?update=$rand',
+				'quality', 'high', 'wmode', 'transparent', 'bgcolor', '#ffffff',
+				'align', 'middle', 'menu', 'false', 'allowScriptAccess', 'sameDomain');\n</script>" :
+				"<script type=\"text/javascript\" reload=\"1\">\n$('seccodeswf_$secchecktype').innerHTML=AC_FL_RunContent(
+				'width', '$seccodedata[width]', 'height', '$seccodedata[height]', 'src', '{$boardurl}images/seccode/flash/flash2.swf',
+				'FlashVars', 'sFile={$boardurl}seccode.php?update=$rand', 'menu', 'false', 'allowScriptAccess', 'sameDomain', 'swLiveConnect', 'true');\n</script>");
+		} elseif($seccodedata['type'] == 3) {
+			$flashcode = "<span id=\"seccodeswf_$secchecktype\"></span><script type=\"text/javascript\" reload=\"1\">\n$('seccodeswf_$secchecktype').innerHTML=AC_FL_RunContent(
+				'id', 'seccodeplayer', 'name', 'seccodeplayer', 'width', '0', 'height', '0', 'src', '{$boardurl}images/seccode/flash/flash1.swf',
+				'FlashVars', 'sFile={$boardurl}seccode.php?update=$rand', 'menu', 'false', 'allowScriptAccess', 'sameDomain', 'swLiveConnect', 'true');\n</script>";
+			$message = 'seccode_player';
+		} else {
+			$message = '<img onclick="updateseccode'.$secchecktype.'()" width="'.$seccodedata['width'].'" height="'.$seccodedata['height'].'" src="seccode.php?update='.$rand.'" class="absmiddle" alt="" />';
+		}
+	}
+	showmessage($message);
+
+} elseif($action == 'checkseccode') {
+
+	if($seclevel) {
+		$tmp = $seccode;
+	} else {
+		$key = $seccodedata['type'] != 3 ? '' : $_DCACHE['settings']['authkey'].date('Ymd');
+		list($tmp, $expiration, $seccodeuid) = explode("\t", authcode($_DCOOKIE['secc'], 'DECODE', $key));
+		if($seccodeuid != $discuz_uid || $timestamp - $expiration > 600) {
+			showmessage('submit_seccode_invalid');
+		}
+	}
+	seccodeconvert($tmp);
+	strtoupper($seccodeverify) != $tmp && showmessage('submit_seccode_invalid');
+	showmessage('succeed');
+
+} elseif($action == 'checksecanswer') {
+
+	if($seclevel) {
+		$tmp = $seccode;
+	} else {
+		list($tmp, $expiration, $seccodeuid) = explode("\t", authcode($_DCOOKIE['secq'], 'DECODE'));
+		if($seccodeuid != $discuz_uid || $timestamp - $expiration > 600) {
+			showmessage('submit_secqaa_invalid');
+		}
+	}
+
+	require_once DISCUZ_ROOT.'./forumdata/cache/cache_secqaa.php';
+	!$headercharset && @dheader('Content-Type: text/html; charset='.$charset);
+
+	if(md5($secanswer) != $_DCACHE['secqaa'][substr($tmp, 0, 1)]['answer']) {
+		showmessage('submit_secqaa_invalid');
+	}
+	showmessage('succeed');
+
+} elseif($action == 'checkusername') {
+
+	$username = trim($username);
+
+	require_once DISCUZ_ROOT.'./uc_client/client.php';
+
+	$ucresult = uc_user_checkname($username);
+
+	if($ucresult == -1) {
+		showmessage('profile_username_illegal', '', 1);
+	} elseif($ucresult == -2) {
+		showmessage('profile_username_protect', '', 1);
+	} elseif($ucresult == -3) {
+		if($db->result_first("SELECT uid FROM {$tablepre}members WHERE username='$username'")) {
+			showmessage('register_check_found', '', 1);
+		} else {
+			showmessage('register_activation', '', 1);
+		}
+	}
+
+} elseif($action == 'checkemail') {
+
+	$email = trim($email);
+
+	require_once DISCUZ_ROOT.'./uc_client/client.php';
+
+	$ucresult = uc_user_checkemail($email);
+	if($ucresult == -4) {
+		showmessage('profile_email_illegal', '', 1);
+	} elseif($ucresult == -5) {
+		showmessage('profile_email_domain_illegal', '', 1);
+	} elseif($ucresult == -6) {
+		showmessage('profile_email_duplicate', '', 1);
+	}
+
+} elseif($action == 'checkuserexists') {
+
+	$check = $db->result_first("SELECT uid FROM {$tablepre}members WHERE username='".trim($username)."'");
+	$check ? showmessage('<img src="'.IMGDIR.'/check_right.gif" width="13" height="13">')
+		: showmessage('username_nonexistence');
+
+} elseif($action == 'checkinvitecode') {
+
+	$invitecode = trim($invitecode);
+	$check = $db->result_first("SELECT invitecode FROM {$tablepre}invites WHERE invitecode='".trim($invitecode)."' AND status IN ('1', '3')");
+	if(!$check) {
+		showmessage('invite_invalid', '', 1);
+	} else {
+		$query = $db->query("SELECT m.username FROM {$tablepre}invites i, {$tablepre}members m WHERE invitecode='".trim($invitecode)."' AND i.uid=m.uid");
+		$inviteuser = $db->fetch_array($query);
+		$inviteuser = $inviteuser['username'];
+		showmessage('invite_send');
+	}
+
+} elseif($action == 'attachlist') {
+
+	require_once DISCUZ_ROOT.'./include/post.func.php';
+	$attachlist = getattach(intval($posttime));
+	$attachlist = $attachlist['attachs']['unused'];
+
+	include template('header_ajax');
+	include template('ajax_attachlist');
+	include template('footer_ajax');
+	dexit();
+
+} elseif($action == 'imagelist') {
+
+	require_once DISCUZ_ROOT.'./include/post.func.php';
+	$attachlist = getattach();
+	$imagelist = $attachlist['imgattachs']['unused'];
+
+	include template('header_ajax');
+	include template('ajax_imagelist');
+	include template('footer_ajax');
+	dexit();
+
+} elseif($action == 'displaysearch_adv') {
+	$display = $display == 1 ? 1 : '';
+	dsetcookie('displaysearch_adv', $display);
+}
+
+showmessage($reglinkname, '', 2);
+
+?>
