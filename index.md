@@ -44,5 +44,5 @@
 2-2-S      表情包或刷屏超过30，连楼时，警告或直接飞机票。
 2-4-A      妨碍管理员工作的，直接飞机票。如私聊管理员刷屏。
   群规现在已同步网站（emerald6666.github.io)
-Wiki：https：// emerald-6666.Github.io/wiki/ 
+Wiki：https://emerald-6666.Github.io/wiki/ 
 本群规即发布起开始执行，本群处理一切事务以本文档条例为准。其他人除管理员外发布此群规其他版本均为违规！
